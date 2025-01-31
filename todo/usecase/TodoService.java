@@ -1,9 +1,8 @@
 package com.example.springdemo.todo.usecase;
 
-import com.example.springdemo.todo.domain.Todo;
 import com.example.springdemo.todo.domain.TodoCommand;
 import com.example.springdemo.todo.domain.TodoResult;
-import com.example.springdemo.todo.port.EntityRepositoryPort;
+import com.example.springdemo.todo.port.TodoRepositoryPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -16,20 +15,16 @@ import java.util.stream.Collectors;
 
 @Service
 public class TodoService implements TodoUseCase {
-    private final EntityRepositoryPort<Todo> todoRepository;
+    private final TodoRepositoryPort todoRepository;
 
     @Autowired
-    public TodoService(EntityRepositoryPort<Todo> todoRepository) {
+    public TodoService(TodoRepositoryPort todoRepository) {
         this.todoRepository = todoRepository;
     }
 
     // 글쓰기
     public TodoResult write(TodoCommand todoCommand) {
-        String title = todoCommand.title();
-        String content = todoCommand.content();
-
-        TodoCommand todo = new TodoCommand(title, content);
-        return todoRepository.save(todo);
+        return todoRepository.save(todoCommand);
     }
 
     // 제목 리스트 뽑기

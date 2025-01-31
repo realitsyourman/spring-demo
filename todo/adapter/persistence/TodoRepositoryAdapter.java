@@ -4,67 +4,57 @@ package com.example.springdemo.todo.adapter.persistence;
 import com.example.springdemo.todo.domain.Todo;
 import com.example.springdemo.todo.domain.TodoCommand;
 import com.example.springdemo.todo.domain.TodoResult;
-import com.example.springdemo.todo.port.EntityRepositoryPort;
-import lombok.Getter;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.springdemo.todo.port.TodoRepositoryPort;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Getter
 @Repository
-public class TodoRepositoryAdapter implements EntityRepositoryPort<Todo> {
+class TodoRepositoryAdapter implements TodoRepositoryPort {
     private final TodoRepository todoRepository;
-    int todoId = 1;
+    private int todoId = 1;
 
-    @Autowired
     public TodoRepositoryAdapter(TodoRepository todoRepository) {
         this.todoRepository = todoRepository;
     }
 
     @Override
-    public TodoResult save(TodoCommand todo) {
-        Todo newTodo = convertToTodo(todo);
-        Todo savedTodo = todoRepository.save(newTodo);
-
-        TodoResult todoResult = new TodoResult(newTodo.getId(),
-                newTodo.getTitle(),
-                newTodo.getContent(),
-                newTodo.getDate());
-
-        return todoResult;
+    public TodoResult save(TodoCommand command) {
+        Todo todo = convertToTodo(command);
+        Todo savedTodo = todoRepository.save(todo);
+        return convertToDto(savedTodo);
     }
 
     @Override
     public TodoResult findById(long id) {
-        Todo byId = todoRepository.findById(id);
-        if (byId == null) {
-            return null;
-        }
-        return convertToDto(byId);
+        Todo todo = todoRepository.findById(id);
+        return todo != null ? convertToDto(todo) : null;
     }
 
     @Override
     public Map<Long, TodoResult> findAll() {
-        Map<Long, Todo> allTodos = todoRepository.findAll();
-
-        Map<Long, TodoResult> collect = allTodos.entrySet().stream()
+        return todoRepository.findAll()
+                .entrySet()
+                .stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> convertToDto(entry.getValue())
                 ));
-
-        return collect;
     }
 
-    public Todo convertToTodo(TodoCommand todo) {
-        return new Todo(todoId++, todo.title(), todo.content());
+    private Todo convertToTodo(TodoCommand command) {
+        return new Todo(todoId++, command.title(), command.content());
     }
 
-    public TodoResult convertToDto(Todo todo) {
-        return new TodoResult(todo.getId(), todo.getTitle(), todo.getContent(), LocalDateTime.now());
+    private TodoResult convertToDto(Todo todo) {
+        return new TodoResult(
+                todo.getId(),
+                todo.getTitle(),
+                todo.getContent(),
+                LocalDateTime.now()
+        );
     }
 }
 
